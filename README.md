@@ -18,3 +18,5 @@ Cada cambio en `main` o en un pull request ejecuta GitHub Actions para comprobar
 - Catálogos JSON y configuración de la API `/api/v1/`.
 - Auditoría de dependencias con `npm audit`.
 - Análisis de seguridad JavaScript con CodeQL.
+
+En cada `push` a `main`, si todas las validaciones pasan, el mismo workflow publica el sitio en GitHub Pages.

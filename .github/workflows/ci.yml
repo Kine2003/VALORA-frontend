@@ -7,8 +7,11 @@ on:
     branches: [main]
 
 permissions:
+  actions: read
   contents: read
   security-events: write
+  pages: write
+  id-token: write
 
 jobs:
   validate:
@@ -49,3 +52,24 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: /language:javascript
+
+  deploy:
+    name: Publicar en GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [validate, codeql]
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Preparar artefacto de Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Publicar sitio
+        id: deployment
+        uses: actions/deploy-pages@v4
