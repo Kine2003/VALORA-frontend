@@ -21,4 +21,4 @@ Cada cambio en `main` o en un pull request ejecuta GitHub Actions para comprobar
 
 En cada `push` a `main`, si todas las validaciones pasan, el mismo workflow publica el sitio en GitHub Pages.
 
-La página publicada queda en `https://kine2003.github.io/VALORA-frontend/`.
+La página publicada queda en `https://kine2003.github.io/VALORA-frontend/` cuando finaliza correctamente el workflow.
