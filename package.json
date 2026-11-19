@@ -1,0 +1,12 @@
+{
+  "name": "valora-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "validate": "node scripts/validate-frontend.mjs"
+  }
+}

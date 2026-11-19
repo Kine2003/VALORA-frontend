@@ -8,3 +8,13 @@ En Render usa:
 
 - **Build Command:** vacío
 - **Publish Directory:** `.`
+
+## Validación CI/CD
+
+Cada cambio en `main` o en un pull request ejecuta GitHub Actions para comprobar:
+
+- Sintaxis de todos los archivos JavaScript.
+- Versiones y compatibilidad con Node.js 24.
+- Catálogos JSON y configuración de la API `/api/v1/`.
+- Auditoría de dependencias con `npm audit`.
+- Análisis de seguridad JavaScript con CodeQL.
