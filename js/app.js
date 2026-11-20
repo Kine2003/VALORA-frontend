@@ -470,7 +470,7 @@ function inicializarFormulario() {
   if (servidorLocal()) {
     form.querySelector('button[type="submit"]').firstChild.textContent = "Registrar mi cotización ";
     document.getElementById("aviso-formulario").textContent =
-      "Completa los campos obligatorios (*). Al continuar se guardará tu cotización en la base local.";
+      "Completa los campos obligatorios (*). Al continuar se registrará tu cotización.";
     prepared.querySelector("p").textContent = "Tu cotización quedó registrada. Puedes compartir el resumen por WhatsApp o correo.";
   }
 

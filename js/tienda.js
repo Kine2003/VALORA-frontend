@@ -38,7 +38,7 @@ export function inicializarTienda() {
   let finalizandoCompra = false;
   if (servidorLocal()) {
     buscar("finalizar-compra").firstChild.textContent = "Registrar pedido ";
-    buscar("ayuda-finalizar-pedido").firstChild.textContent = "Los datos del pedido se guardan en la base local. ";
+    buscar("ayuda-finalizar-pedido").firstChild.textContent = "Al continuar se registrará tu pedido. ";
     buscar("ayuda-pedido-preparado").textContent = "El pedido quedó registrado. La disponibilidad y la confirmación se coordinan con Válora.";
   }
 

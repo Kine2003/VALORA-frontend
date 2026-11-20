@@ -7,6 +7,7 @@
     "node": ">=24"
   },
   "scripts": {
+    "start": "node scripts/serve-local.mjs",
     "validate": "node scripts/validate-frontend.mjs"
   }
 }
