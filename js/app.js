@@ -10,6 +10,7 @@ import { cargarCatalogo } from "./catalogo.js";
 import { inicializarBorrador } from "./borrador.js";
 import { mostrarServicios } from "./view.js";
 import { registrarSolicitud, servidorLocal } from "./api.js";
+import { inicializarAcceso } from "./acceso.js";
 
 const CLAVE_POSICION_SCROLL = "valora-scroll-position-v1";
 
@@ -633,6 +634,7 @@ inicializarNavegacion();
 inicializarAnclas();
 inicializarFiltros();
 inicializarDialogo();
+inicializarAcceso();
 const cargasDeContenido = [inicializarServicios()];
 inicializarFormulario();
 document.documentElement.classList.add("js");

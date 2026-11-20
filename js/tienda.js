@@ -4,7 +4,8 @@ import { cargarProductos, leerCarrito, guardarCarrito, vaciarCarritoGuardado, le
 import { mostrarProductos, mostrarConfiguracion, mostrarOpcionesComida, mostrarCarrito, mostrarTotales, actualizarLineaCarrito, mostrarActualizacion } from "./view.js";
 import { inicializarBorrador } from "./borrador.js";
 import { fechaLocal } from "./solicitud.js";
-import { registrarSolicitud, servidorLocal } from "./api.js";
+import { registrarSolicitud, solicitarApi, servidorLocal } from "./api.js";
+import { leerSesion } from "./sesion.js";
 
 export function inicializarTienda() {
   const buscar = id => document.getElementById(id);
@@ -36,6 +37,8 @@ export function inicializarTienda() {
   let focoCarritoAlCerrar = null;
   let intentoCompra = false;
   let finalizandoCompra = false;
+  let ordenActualId = null;
+  let ordenActualTotal = 0;
   if (servidorLocal()) {
     buscar("finalizar-compra").firstChild.textContent = "Registrar pedido ";
     buscar("ayuda-finalizar-pedido").firstChild.textContent = "Al continuar se registrará tu pedido. ";
@@ -255,6 +258,14 @@ export function inicializarTienda() {
   configuracion.addEventListener("submit", event => {
     event.preventDefault();
     try {
+      if (!leerSesion()) {
+        const acceso = document.getElementById("dialogo-acceso");
+        if (typeof acceso?.showModal === "function") {
+          acceso.showModal();
+          document.getElementById("acceso-correo")?.focus();
+        }
+        throw new Error("Inicia sesión o crea una cuenta antes de agregar una orden.");
+      }
       if (!editando && carrito.lineas.length >= 12) throw new Error("Puedes combinar hasta 12 paquetes. Edita uno existente o quítalo antes de agregar otro.");
       if (editando && !carrito.lineas.some(linea => linea.id === editando)) throw new Error("Este paquete cambió en otra pestaña. Cierra la configuración y revisa el carrito.");
       const linea = crearLinea(productoActual, opcionesConfiguracion(), editando ?? undefined);
@@ -412,6 +423,15 @@ export function inicializarTienda() {
   formulario.addEventListener("submit", async event => {
     event.preventDefault();
     if (finalizandoCompra || !comprobante.hidden) return;
+    if (!leerSesion()) {
+      const acceso = document.getElementById("dialogo-acceso");
+      if (typeof acceso?.showModal === "function") {
+        acceso.showModal();
+        document.getElementById("acceso-correo")?.focus();
+      }
+      anunciar("Inicia sesión o crea una cuenta antes de registrar una orden.");
+      return;
+    }
     intentoCompra = true;
     fecha.min = fechaLocal();
     const errores = erroresCliente();
@@ -430,11 +450,13 @@ export function inicializarTienda() {
     buscar("finalizar-compra").disabled = true;
     try {
       // Valida de nuevo cantidades, opciones y precios antes de modificar el carrito.
-      calcularTotales(carrito.lineas, productos, entrega.value);
+      const totalesOrden = calcularTotales(carrito.lineas, productos, entrega.value);
+      ordenActualTotal = totalesOrden.totalCentavos;
       const contacto = leerCliente();
       const registro = servidorLocal()
         ? await registrarSolicitud("pedidos", { contacto, lineas: carrito.lineas })
         : null;
+      ordenActualId = registro?.id ? String(registro.id) : null;
       const resumen = registro
         ? "Pedido registrado #" + registro.id + "\n\n" + registro.resumen
         : crearResumenPedido(carrito.lineas, productos, contacto);
@@ -464,6 +486,64 @@ export function inicializarTienda() {
       buscar("finalizar-compra").disabled = false;
     }
   });
+  const dialogoPago = buscar("dialogo-pago");
+  function cerrarPago() {
+    if (dialogoPago?.open) dialogoPago.close();
+  }
+  async function registrarPago(metodo) {
+    if (!ordenActualId) throw new Error("No pudimos identificar la orden recién creada.");
+    const resultado = await solicitarApi(`cuenta/ordenes/${ordenActualId}/pago`, {
+      metodo: "POST",
+      cuerpo: { metodo },
+    });
+    return resultado;
+  }
+  async function confirmarPago(metodo, mensaje) {
+    try {
+      await registrarPago(metodo);
+      cerrarPago();
+      buscar("pago-opciones").hidden = true;
+      buscar("titulo-comprobante").textContent = metodo === "EFECTIVO"
+        ? "Coordina el pago con el administrador"
+        : "Pago aceptado · orden activa";
+      buscar("ayuda-pedido-preparado").textContent = mensaje;
+      anunciar(mensaje);
+    } catch (error) {
+      buscar("pago-descripcion").textContent = error.message;
+    }
+  }
+  buscar("pago-opciones")?.addEventListener("click", evento => {
+    const boton = evento.target.closest("[data-pago]");
+    if (!boton) return;
+    const metodo = boton.dataset.pago;
+    if (metodo === "despues") {
+      buscar("pago-opciones").hidden = true;
+      buscar("titulo-comprobante").textContent = "Orden registrada";
+      buscar("ayuda-pedido-preparado").textContent = "Estado: pendiente de pago. Puedes pagarla desde Mis órdenes.";
+      return;
+    }
+    buscar("vista-qr").hidden = metodo !== "transferencia";
+    buscar("formulario-tarjeta").hidden = metodo !== "tarjeta";
+    buscar("vista-efectivo").hidden = metodo !== "efectivo";
+    buscar("pago-descripcion").textContent = `Orden #${ordenActualId} · ${formatoMoneda(ordenActualTotal)}`;
+    buscar("pago-qr-total").textContent = formatoMoneda(ordenActualTotal);
+    if (metodo === "efectivo") {
+      const texto = encodeURIComponent(`Hola, quiero coordinar el pago en efectivo de la orden #${ordenActualId} por ${formatoMoneda(ordenActualTotal)}.`);
+      buscar("enlace-pago-efectivo").href = `https://wa.me/593995883856?text=${texto}`;
+    }
+    dialogoPago.showModal();
+  });
+  buscar("cerrar-pago")?.addEventListener("click", cerrarPago);
+  buscar("confirmar-transferencia")?.addEventListener("click", () =>
+    void confirmarPago("TRANSFERENCIA", "Transferencia aceptada. Tu orden está activa."));
+  buscar("formulario-tarjeta")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    await confirmarPago("TARJETA", "Pago con tarjeta aceptado. Tu orden está activa.");
+  });
+  buscar("enlace-pago-efectivo")?.addEventListener("click", async () => {
+    await confirmarPago("EFECTIVO", "Solicitud de pago en efectivo enviada. Coordina el pago por WhatsApp.");
+  });
+
   buscar("seguir-comprando").addEventListener("click", () => {
     invalidarComprobante();
     actualizarVisibilidad();

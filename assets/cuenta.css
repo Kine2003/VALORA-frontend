@@ -1,0 +1,373 @@
+/* Acceso de clientes: botón de cabecera y diálogo de sesión. */
+
+.acceso-cuenta {
+  gap: 0.55rem;
+  padding-inline: 0.95rem;
+  min-height: 2.75rem;
+  border-color: var(--borde);
+  background: var(--papel);
+}
+
+.acceso-cuenta .icono {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.acceso-cuenta:hover {
+  border-color: var(--dorado);
+  background: var(--fondo);
+}
+
+@media (max-width: 1199px) {
+  .acceso-cuenta {
+    width: 2.75rem;
+    padding: 0;
+    border-radius: 50%;
+  }
+  .acceso-cuenta-texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+.dialogo-acceso {
+  width: min(31rem, calc(100% - 2rem));
+  max-height: min(88dvh, 52rem);
+  padding: 0 1.6rem 1.7rem;
+  border: 1px solid color-mix(in srgb, var(--dorado) 32%, var(--borde));
+  border-top: 3px solid var(--dorado);
+  border-radius: 1rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+  box-shadow: 0 24px 80px rgb(24 18 12 / 28%);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--dorado) 5%, var(--papel)), var(--papel) 38%);
+}
+
+.dialogo-acceso .dialogo-cabecera {
+  justify-content: flex-end;
+  padding-top: 1rem;
+}
+
+.dialogo-acceso h2 {
+  font-family: var(--serif, Georgia, serif);
+  font-size: clamp(2.1rem, 4vw, 2.6rem);
+  margin: 0.4rem 0 0.6rem;
+  letter-spacing: -0.025em;
+}
+
+.dialogo-acceso h3 {
+  margin-top: 1.4rem;
+}
+
+.acceso-etiqueta {
+  margin: 0.35rem 0 0;
+  color: var(--foco);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.acceso-intro {
+  font-size: 0.88rem;
+  color: var(--suave);
+  line-height: 1.7;
+  max-width: 25rem;
+}
+
+.formulario-acceso {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.4rem;
+}
+
+.formulario-acceso .campo label {
+  font-size: 0.8rem;
+}
+
+.formulario-acceso .campo input {
+  min-height: 3rem;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--papel) 92%, var(--fondo));
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.formulario-acceso .campo input:focus {
+  border-color: var(--dorado);
+  background: var(--papel);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--dorado) 16%, transparent);
+}
+
+.acceso-enviar {
+  width: 100%;
+  margin-top: 0.35rem;
+  min-height: 3.15rem;
+  border-radius: 0.65rem;
+}
+
+.acceso-cambio {
+  margin-top: 1.15rem;
+  font-size: 0.82rem;
+  color: var(--suave);
+  text-align: center;
+}
+
+.enlace-texto {
+  min-height: 2.75rem;
+  padding: 0.2rem 0.15rem;
+  border: 0;
+  background: none;
+  color: var(--foco);
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.enlace-texto:hover {
+  color: var(--titulo);
+}
+
+.mensaje-error {
+  border-left: 3px solid var(--error);
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--error) 8%, var(--papel));
+  padding: 0.65rem 0.75rem;
+}
+
+.cuenta-correo {
+  margin-top: -0.2rem;
+  color: var(--suave);
+  font-size: 0.85rem;
+}
+
+.cuenta-lista {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.7rem;
+}
+
+.cuenta-solicitud {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem 0.9rem;
+  align-items: center;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--borde);
+  border-radius: 0.6rem;
+  background: var(--fondo);
+}
+
+.orden-activa,
+.orden-pendiente {
+  display: inline-flex;
+  margin-top: 0.45rem;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.orden-activa {
+  background: color-mix(in srgb, #3f7d4e 18%, transparent);
+  color: #2f663c;
+}
+
+.orden-pendiente {
+  background: color-mix(in srgb, var(--dorado) 20%, transparent);
+  color: var(--dorado-oscuro);
+}
+
+.orden-pago-acciones {
+  display: grid;
+  grid-template-columns: minmax(7rem, 1fr) auto;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.orden-pago-acciones select {
+  min-height: 2.5rem;
+  border: 1px solid var(--borde-campo);
+  border-radius: 0.55rem;
+  background: var(--papel);
+  color: var(--titulo);
+  padding-inline: 0.55rem;
+}
+
+.pago-opciones {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+  background: var(--fondo);
+}
+
+.pago-vista {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.qr-ficticio {
+  width: 11rem;
+  height: 11rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin: 0 auto;
+  padding: 1rem;
+  border: 2px solid var(--titulo);
+  border-radius: 0.55rem;
+  background:
+    linear-gradient(90deg, var(--titulo) 1px, transparent 1px),
+    linear-gradient(var(--titulo) 1px, transparent 1px),
+    var(--papel);
+  background-size: 1.25rem 1.25rem;
+}
+
+.qr-ficticio span {
+  border: 0.35rem solid var(--titulo);
+  border-radius: 0.2rem;
+}
+
+.tarjeta-ficticia {
+  display: grid;
+  gap: 1rem;
+  max-width: 22rem;
+  min-height: 12rem;
+  margin: 0 auto;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #17120d, #4d3a25);
+  color: #fff;
+  text-align: left;
+  box-shadow: 0 16px 40px rgb(23 18 13 / 22%);
+}
+
+.tarjeta-ficticia p {
+  color: var(--dorado-suave);
+  letter-spacing: 0.15em;
+  font-size: 0.72rem;
+}
+
+.tarjeta-ficticia input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid rgb(255 255 255 / 55%);
+  background: transparent;
+  color: #fff;
+}
+
+.tarjeta-ficticia div {
+  display: grid;
+  grid-template-columns: 1fr 5rem;
+  gap: 0.8rem;
+}
+
+.cuenta-solicitud strong {
+  display: block;
+  color: var(--titulo);
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.cuenta-solicitud > div span {
+  display: block;
+  color: var(--suave);
+  font-size: 0.75rem;
+}
+
+.cuenta-vacia {
+  padding: 1.1rem;
+  border: 1px dashed var(--borde-campo);
+  border-radius: 0.6rem;
+  color: var(--suave);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.pastilla-estado {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  background: var(--fondo-calido);
+  color: var(--foco);
+}
+
+.pastilla-estado.estado-nueva {
+  background: color-mix(in srgb, var(--dorado) 22%, transparent);
+  color: var(--dorado-oscuro);
+}
+
+.pastilla-estado.estado-cotizada,
+.pastilla-estado.estado-en_revision {
+  background: color-mix(in srgb, #3f7c8a 18%, transparent);
+  color: #2c6674;
+}
+
+.pastilla-estado.estado-confirmada,
+.pastilla-estado.estado-en_proceso {
+  background: color-mix(in srgb, #3f7d4e 20%, transparent);
+  color: #2f663c;
+}
+
+.pastilla-estado.estado-entregada {
+  background: color-mix(in srgb, #3f7d4e 30%, transparent);
+  color: #24522f;
+}
+
+.pastilla-estado.estado-rechazada,
+.pastilla-estado.estado-cancelada {
+  background: color-mix(in srgb, #b42336 16%, transparent);
+  color: var(--error);
+}
+
+:root[data-theme="dark"] .pastilla-estado.estado-nueva {
+  color: #ebd19c;
+}
+
+:root[data-theme="dark"] .pastilla-estado.estado-cotizada,
+:root[data-theme="dark"] .pastilla-estado.estado-en_revision {
+  color: #9fd0da;
+}
+
+:root[data-theme="dark"] .pastilla-estado.estado-confirmada,
+:root[data-theme="dark"] .pastilla-estado.estado-en_proceso,
+:root[data-theme="dark"] .pastilla-estado.estado-entregada {
+  color: #a9dcb4;
+}
+
+.cuenta-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.35rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .pastilla-estado.estado-nueva {
+    color: #ebd19c;
+  }
+  :root:not([data-theme="light"]) .pastilla-estado.estado-cotizada,
+  :root:not([data-theme="light"]) .pastilla-estado.estado-en_revision {
+    color: #9fd0da;
+  }
+  :root:not([data-theme="light"]) .pastilla-estado.estado-confirmada,
+  :root:not([data-theme="light"]) .pastilla-estado.estado-en_proceso,
+  :root:not([data-theme="light"]) .pastilla-estado.estado-entregada {
+    color: #a9dcb4;
+  }
+}

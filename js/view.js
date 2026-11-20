@@ -210,7 +210,7 @@ export function mostrarCarrito(carrito, productos, entrega) {
       );
     }
   }
-  document.querySelector(".acceso-carrito").setAttribute("aria-label", `Ver carrito, ${carrito.lineas.length} ${carrito.lineas.length === 1 ? "paquete" : "paquetes"}`);
+  document.querySelector(".acceso-carrito").setAttribute("aria-label", `Ver mis órdenes, ${carrito.lineas.length} ${carrito.lineas.length === 1 ? "paquete" : "paquetes"}`);
   mostrarActualizacion(carrito);
   mostrarTotales(carrito.lineas, productos, entrega);
 }

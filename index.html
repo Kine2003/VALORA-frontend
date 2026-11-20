@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="assets/styles.css">
     <link rel="stylesheet" href="assets/tienda.css">
     <link rel="stylesheet" href="assets/editorial.css">
+    <link rel="stylesheet" href="assets/cuenta.css">
     <link rel="stylesheet" href="assets/print.css" media="print">
     <script src="js/app.js" type="module"></script>
   </head>
@@ -82,6 +83,14 @@
       <symbol id="i-close" viewBox="0 0 24 24">
         <path d="m6 6 12 12M6 18 18 6" />
       </symbol>
+      <symbol id="i-user" viewBox="0 0 24 24">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21a8 8 0 0 1 16 0" />
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24">
+        <rect x="4" y="10" width="16" height="11" rx="2" />
+        <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+      </symbol>
     </svg>
     <header class="cabecera">
       <div class="contenedor barra-navegacion">
@@ -99,6 +108,17 @@
         <div class="nav-acciones">
           <a class="boton boton-morado cabecera-cotizar" href="#contacto">Solicitar cotización <svg class="icono" aria-hidden="true"><use href="#i-arrow" /></svg></a>
           <button
+            class="boton boton-borde acceso-cuenta"
+            id="abrir-acceso"
+            type="button"
+            aria-haspopup="dialog"
+            aria-controls="dialogo-acceso"
+            aria-label="Iniciar sesión o crear una cuenta"
+          >
+            <svg class="icono" aria-hidden="true"><use href="#i-user" /></svg>
+            <span class="acceso-cuenta-texto" id="acceso-cuenta-texto">Iniciar sesión</span>
+          </button>
+          <button
             id="tema-toggle"
             class="boton-icono solo-js"
             type="button"
@@ -108,9 +128,9 @@
             <svg class="icono" aria-hidden="true">
               <use href="#i-moon" />
             </svg></button
-            ><button class="boton boton-azul acceso-carrito" id="abrir-carrito" type="button" aria-label="Ver carrito, 0 paquetes" aria-haspopup="dialog" aria-controls="carrito" aria-expanded="false"
+            ><button class="boton boton-azul acceso-carrito" id="abrir-carrito" type="button" aria-label="Ver mis órdenes, 0 paquetes" aria-haspopup="dialog" aria-controls="carrito" aria-expanded="false"
             ><svg class="icono" aria-hidden="true"><use href="#i-cart" /></svg>
-            <span class="carrito-texto">Carrito</span><span id="cuenta-carrito" aria-hidden="true">0</span></button
+            <span class="carrito-texto">Mis órdenes</span><span id="cuenta-carrito" aria-hidden="true">0</span></button
           ><button
             class="boton-menu solo-js"
             id="menu-toggle"
@@ -288,15 +308,15 @@
         <div class="contenedor">
           <div class="carrito-panel-cabecera">
             <div><h2 id="titulo-carrito" tabindex="-1">Tu pedido</h2><p id="ayuda-carrito" class="ayuda">Revisa tus paquetes y completa los datos del servicio. Cada pedido corresponde a una comida y un horario.</p></div>
-            <button type="button" class="boton-icono" id="cerrar-carrito" aria-label="Cerrar carrito"><svg class="icono" aria-hidden="true"><use href="#i-close" /></svg></button>
+            <button type="button" class="boton-icono" id="cerrar-carrito" aria-label="Cerrar órdenes"><svg class="icono" aria-hidden="true"><use href="#i-close" /></svg></button>
           </div>
           <p id="estado-carrito" class="estado-tienda" role="status" aria-atomic="true"></p>
           <p id="aviso-almacenamiento" class="aviso-tienda" role="status" aria-atomic="true" hidden></p>
-          <div id="carrito-vacio" class="carrito-vacio"><h3>Todavía no hay paquetes en tu carrito.</h3><p>Encuentra una opción para tu equipo y personalízala a tu gusto.</p><a class="boton boton-morado" href="#paquetes">Explorar paquetes <span aria-hidden="true">↗</span></a></div>
+          <div id="carrito-vacio" class="carrito-vacio"><h3>Todavía no hay paquetes en tu orden.</h3><p>Encuentra una opción para tu equipo y personalízala a tu gusto.</p><a class="boton boton-morado" href="#paquetes">Explorar paquetes <span aria-hidden="true">↗</span></a></div>
           <div id="carrito-contenido" hidden>
             <div class="carrito-distribucion">
               <div>
-                <div class="carrito-barra"><h3>Paquetes seleccionados</h3><button type="button" class="enlace-flecha" id="vaciar-carrito">Vaciar carrito</button></div>
+                <div class="carrito-barra"><h3>Paquetes seleccionados</h3><button type="button" class="enlace-flecha" id="vaciar-carrito">Vaciar orden</button></div>
                 <div id="lineas-carrito" class="lineas-carrito"></div>
                 <div id="confirmar-vaciado" class="aviso-tienda" hidden><p>¿Quieres quitar todos los paquetes? Tus datos del evento se conservarán.</p><div class="acciones-tienda"><button type="button" class="boton boton-borde" id="cancelar-vaciado">Conservar paquetes</button><button type="button" class="boton boton-morado" id="confirmar-vaciar">Sí, vaciar carrito</button></div></div>
                 <p class="ayuda">Los paquetes y sus preferencias se guardan en este navegador. Puedes eliminarlos con «Vaciar carrito».</p>
@@ -328,9 +348,18 @@
           </div>
           <section id="comprobante-pedido" class="comprobante-pedido" aria-labelledby="titulo-comprobante" hidden>
             <h3 id="titulo-comprobante" tabindex="-1">Tu pedido está preparado</h3>
-            <p class="ayuda" id="ayuda-pedido-preparado">Resumen de demostración preparado en este navegador. La disponibilidad y la confirmación se coordinan con Válora.</p>
+            <p class="ayuda" id="ayuda-pedido-preparado">Tu orden quedó registrada. Elige cómo pagar ahora o déjala pendiente.</p>
             <pre id="resumen-pedido-preparado" class="resumen-pedido-preparado" tabindex="0" aria-label="Resumen del pedido preparado"></pre>
-            <div class="acciones-tienda"><button id="seguir-comprando" class="boton boton-morado" type="button">Preparar otro pedido <span aria-hidden="true">→</span></button></div>
+            <div class="pago-opciones" id="pago-opciones">
+              <p><strong>¿Cómo quieres cancelar tu orden?</strong></p>
+              <div class="acciones-tienda">
+                <button type="button" class="boton boton-borde" data-pago="transferencia">Transferencia</button>
+                <button type="button" class="boton boton-borde" data-pago="tarjeta">Tarjeta</button>
+                <button type="button" class="boton boton-borde" data-pago="efectivo">Efectivo</button>
+                <button type="button" class="boton boton-morado" data-pago="despues">Pagar después</button>
+              </div>
+            </div>
+            <div class="acciones-tienda"><button id="seguir-comprando" class="boton boton-morado" type="button">Preparar otra orden <span aria-hidden="true">→</span></button></div>
           </section>
         </div>
       </dialog>
@@ -917,7 +946,7 @@
         <div class="campo"><label for="paquete-notas">Preferencias de este paquete <span>(opcional)</span></label><textarea id="paquete-notas" name="notas" maxlength="180" rows="2" placeholder="Ej. bebida sin azúcar o presentación individual." aria-describedby="ayuda-paquete-notas error-configuracion"></textarea><p id="ayuda-paquete-notas" class="ayuda">Hasta 180 caracteres. Las preferencias se guardan con el carrito y se confirman antes de contratar.</p></div>
         <div class="configuracion-total"><span>Total del paquete</span><output id="precio-configuracion" aria-live="polite"></output></div>
         <p id="error-configuracion" class="mensaje-error" role="alert" hidden></p>
-        <button type="submit" class="boton boton-morado" id="guardar-paquete">Agregar al carrito</button>
+        <button type="submit" class="boton boton-morado" id="guardar-paquete">Agregar a la orden</button>
       </form>
     </dialog>
     <dialog id="dialogo-servicio" aria-labelledby="dialogo-titulo">
@@ -945,6 +974,201 @@
         >Me interesa este servicio
         <svg class="icono" aria-hidden="true"><use href="#i-arrow" /></svg
       ></button>
+    </dialog>
+    <dialog id="dialogo-pago" class="dialogo-paquete" aria-labelledby="titulo-pago">
+      <div class="dialogo-cabecera">
+        <button type="button" class="boton-icono" id="cerrar-pago" aria-label="Cerrar pago">
+          <svg class="icono" aria-hidden="true"><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <h2 id="titulo-pago">Pagar orden</h2>
+      <p id="pago-descripcion" class="ayuda"></p>
+      <section id="vista-qr" class="pago-vista" hidden>
+        <div class="qr-ficticio" role="img" aria-label="Código QR demostrativo de transferencia">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <strong id="pago-qr-total"></strong>
+        <p class="ayuda">Demostración. Escanea el código para iniciar la transferencia simulada.</p>
+        <button type="button" class="boton boton-morado" id="confirmar-transferencia">Confirmar transferencia</button>
+      </section>
+      <form id="formulario-tarjeta" class="pago-vista" hidden>
+        <div class="tarjeta-ficticia">
+          <p>VÁLORA / DEMO</p>
+          <input name="numero" inputmode="numeric" maxlength="19" placeholder="4242 4242 4242 4242" required>
+          <div><input name="nombre" placeholder="Nombre del titular" required><input name="vencimiento" maxlength="5" placeholder="MM/AA" required></div>
+        </div>
+        <button type="submit" class="boton boton-morado">Aceptar pago con tarjeta</button>
+      </form>
+      <section id="vista-efectivo" class="pago-vista" hidden>
+        <p>Te conectaremos con el administrador por WhatsApp para coordinar el pago en efectivo.</p>
+        <a id="enlace-pago-efectivo" class="boton boton-morado" target="_blank" rel="noopener noreferrer">Abrir WhatsApp</a>
+      </section>
+    </dialog>
+    <dialog id="dialogo-acceso" class="dialogo-acceso" aria-labelledby="titulo-acceso">
+      <div class="dialogo-cabecera">
+        <button
+          id="cerrar-acceso"
+          type="button"
+          class="boton-icono"
+          aria-label="Cerrar el acceso a tu cuenta"
+        >
+          <svg class="icono" aria-hidden="true"><use href="#i-close" /></svg>
+        </button>
+      </div>
+
+      <section id="vista-login" aria-labelledby="titulo-acceso">
+        <p class="acceso-etiqueta">Cuenta Válora</p>
+        <h2 id="titulo-acceso">Inicia sesión</h2>
+        <p class="acceso-intro">
+          Consulta tus pedidos y cotizaciones. Si eres administrador,
+          entrarás directamente al panel.
+        </p>
+        <form id="formulario-login" class="formulario-acceso">
+          <div class="campo">
+            <label for="acceso-correo">Correo o usuario *</label>
+            <input
+              type="text"
+              id="acceso-correo"
+              name="correo"
+              autocomplete="username"
+              placeholder="nombre@empresa.com"
+              required
+              maxlength="160"
+              aria-describedby="error-acceso">
+          </div>
+          <div class="campo">
+            <label for="acceso-password">Contraseña *</label>
+            <input
+              type="password"
+              id="acceso-password"
+              name="password"
+              autocomplete="current-password"
+              placeholder="Tu contraseña"
+              required
+              minlength="8"
+              maxlength="128"
+              aria-describedby="error-acceso">
+          </div>
+          <p class="mensaje-error" id="error-acceso" role="alert" hidden></p>
+          <button class="boton boton-morado acceso-enviar" type="submit">
+            Entrar <svg class="icono" aria-hidden="true"><use href="#i-arrow" /></svg>
+          </button>
+        </form>
+        <p class="acceso-cambio">
+          ¿Aún no tienes cuenta?
+          <button type="button" class="enlace-texto" id="ir-registro">Crear una cuenta</button>
+        </p>
+      </section>
+
+      <section id="vista-registro" hidden aria-labelledby="titulo-registro">
+        <p class="acceso-etiqueta">Cuenta nueva</p>
+        <h2 id="titulo-registro">Crea tu cuenta</h2>
+        <p class="acceso-intro">
+          Guarda tus datos para revisar el estado de tus pedidos y cotizaciones.
+        </p>
+        <form id="formulario-registro" class="formulario-acceso">
+          <div class="campo">
+            <label for="registro-nombre">Nombre completo *</label>
+            <input
+              type="text"
+              id="registro-nombre"
+              name="nombre"
+              autocomplete="name"
+              placeholder="Nombre y apellido"
+              required
+              minlength="3"
+              maxlength="120"
+              aria-describedby="error-registro">
+          </div>
+          <div class="campo">
+            <label for="registro-correo">Correo electrónico *</label>
+            <input
+              type="email"
+              id="registro-correo"
+              name="correo"
+              autocomplete="email"
+              placeholder="nombre@empresa.com"
+              required
+              maxlength="160"
+              aria-describedby="error-registro">
+          </div>
+          <div class="campo">
+            <label for="registro-telefono">Teléfono *</label>
+            <input
+              type="tel"
+              id="registro-telefono"
+              name="telefono"
+              autocomplete="tel"
+              placeholder="+593 99 588 3856"
+              required
+              minlength="9"
+              maxlength="25"
+              pattern="\+?[0-9\s()\-]{9,25}"
+              aria-describedby="error-registro">
+          </div>
+          <div class="campo">
+            <label for="registro-empresa">Empresa <span>(opcional)</span></label>
+            <input
+              type="text"
+              id="registro-empresa"
+              name="empresa"
+              autocomplete="organization"
+              placeholder="Nombre de tu empresa"
+              maxlength="120">
+          </div>
+          <div class="campo">
+            <label for="registro-password">Contraseña *</label>
+            <input
+              type="password"
+              id="registro-password"
+              name="password"
+              autocomplete="new-password"
+              placeholder="Al menos 8 caracteres"
+              required
+              minlength="8"
+              maxlength="128"
+              aria-describedby="error-registro">
+          </div>
+          <div class="campo">
+            <label for="registro-confirmar">Repite la contraseña *</label>
+            <input
+              type="password"
+              id="registro-confirmar"
+              name="confirmar"
+              autocomplete="new-password"
+              placeholder="Vuelve a escribirla"
+              required
+              minlength="8"
+              maxlength="128"
+              aria-describedby="error-registro">
+          </div>
+          <p class="mensaje-error" id="error-registro" role="alert" hidden></p>
+          <button class="boton boton-morado acceso-enviar" type="submit">
+            Crear cuenta <svg class="icono" aria-hidden="true"><use href="#i-arrow" /></svg>
+          </button>
+        </form>
+        <p class="acceso-cambio">
+          ¿Ya tienes cuenta?
+          <button type="button" class="enlace-texto" id="ir-login">Iniciar sesión</button>
+        </p>
+      </section>
+
+      <section id="vista-cuenta" hidden aria-labelledby="titulo-cuenta">
+        <p class="acceso-etiqueta">Tu cuenta</p>
+        <h2 id="titulo-cuenta">Hola</h2>
+        <p class="cuenta-correo" id="cuenta-correo"></p>
+        <h3>Tus solicitudes</h3>
+        <ul id="cuenta-solicitudes" class="cuenta-lista"></ul>
+        <p id="estado-cuenta" class="ayuda" role="status" aria-live="polite"></p>
+        <div class="cuenta-acciones">
+          <button id="cerrar-sesion-cliente" class="boton boton-borde" type="button">
+            Cerrar sesión
+          </button>
+          <a id="cuenta-admin" class="boton boton-morado" href="admin.html" hidden>
+            Ir al panel
+          </a>
+        </div>
+      </section>
     </dialog>
   </body>
 </html>
