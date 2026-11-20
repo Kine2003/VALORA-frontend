@@ -1,13 +1,15 @@
 # Válora frontend
 
-Frontend estático de Válora para publicar como **Static Site** en Render.
+Frontend de Válora publicado en GitHub Pages.
 
-El frontend espera la API en `https://valora-backend.onrender.com`, configurada en las etiquetas `meta[name="valora-api-url"]` de las páginas HTML. Si Render asigna otra URL al backend, actualiza ese valor antes de publicar.
+El frontend usa la API `https://valora-api-9thl.onrender.com`, configurada en las etiquetas `meta[name="valora-api-url"]` de las páginas HTML. El backend recibe y devuelve JSON y guarda las solicitudes en PostgreSQL de Render.
 
-En Render usa:
+Para trabajar en este equipo con PostgreSQL local:
 
-- **Build Command:** vacío
-- **Publish Directory:** `.`
+1. Ejecuta `npm start` en la carpeta `VALORA-backend`. La configuración local usa PostgreSQL en el puerto 5432 y sirve la API en el puerto 3001.
+2. Ejecuta `npm start` en esta carpeta y abre `http://127.0.0.1:3002/`.
+
+El servidor del frontend local usa la API `http://127.0.0.1:3001` al entregar las páginas HTML. Los archivos publicados en GitHub Pages apuntan a Render. Para usar otra API durante el desarrollo, define `API_BASE_URL` antes de iniciar el frontend.
 
 ## Validación CI/CD
 
