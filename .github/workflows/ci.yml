@@ -65,6 +65,9 @@ jobs:
       - name: Descargar código
         uses: actions/checkout@v4
 
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
       - name: Preparar artefacto de Pages
         uses: actions/upload-pages-artifact@v3
         with:
