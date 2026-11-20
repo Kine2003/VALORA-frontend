@@ -8,7 +8,7 @@ const NOMBRE_DB = "valora-tienda";
 const ALMACEN = "catalogos";
 const CLAVE_CATALOGO = "productos-v2";
 const VIGENCIA_CACHE = 7 * 24 * 60 * 60 * 1000;
-const LIMITE_CARGA = 8000;
+const LIMITE_CARGA = 75000;
 const LIMITE_ALMACENAMIENTO = 1500;
 // Acota el trabajo al leer datos que alguien puede modificar desde el navegador.
 const MAXIMO_CARRITO_GUARDADO = 100000;

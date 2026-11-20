@@ -98,7 +98,7 @@ export async function cargarCatalogo({ signal } = {}) {
   const cancelar = () => controlador.abort();
   if (signal?.aborted) throw new DOMException("Carga cancelada.", "AbortError");
   signal?.addEventListener("abort", cancelar, { once: true });
-  const limite = setTimeout(cancelar, 8000);
+  const limite = setTimeout(cancelar, 75000);
   try {
     const respuesta = await fetch(servidorLocal() ? urlApi("servicios") : URL_CATALOGO, {
       signal: controlador.signal,
