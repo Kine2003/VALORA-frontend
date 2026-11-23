@@ -1,6 +1,8 @@
+import { inicializarGestion } from "./gestion.js";
+import { inicializarCocina } from "./cocina.js";
 /* Controlador del panel administrativo de Válora. */
 import { solicitarApi } from "./api.js";
-import { borrarSesion, esAdmin, leerSesion } from "./sesion.js";
+import { borrarSesion, esAdmin, leerSesion, restaurarSesion } from "./sesion.js";
 
 const ESTADOS = ["NUEVA", "EN_REVISION", "COTIZADA", "CONFIRMADA", "EN_PROCESO", "ENTREGADA", "RECHAZADA", "CANCELADA"];
 const ETIQUETAS_ESTADO = {
@@ -88,7 +90,7 @@ function aviso(mensaje, tono = "") {
 }
 
 function manejarError(error) {
-  if (error.estado === 401 || error.estado === 403) {
+  if (error.estado === 401) {
     borrarSesion();
     window.location.replace("index.html?acceso=1");
     return true;
@@ -207,7 +209,10 @@ function solicitudesFiltradas() {
   });
 }
 
+function puedeEditarPedidos() { return leerSesion()?.usuario?.roles?.some(rol => ["ADMINISTRADOR", "OPERACIONES"].includes(rol)); }
+
 function crearSelectorEstado(solicitud) {
+  if (!puedeEditarPedidos()) return pastillaEstado(solicitud.estado);
   const select = document.createElement("select");
   select.className = "selector-estado";
   select.dataset.id = solicitud.id;
@@ -283,6 +288,7 @@ function renderSolicitudes() {
 }
 
 async function actualizarEstado(solicitud, select) {
+  if (!puedeEditarPedidos()) return;
   const anterior = solicitud.estado;
   const nuevo = select.value;
   if (nuevo === anterior) return;
@@ -562,7 +568,7 @@ function renderDetalle(solicitud) {
       const total = crear("b", "", monto(linea.totalCentavos));
       bloque.append(crear("strong", "", linea.paquete));
       bloque.append(crear("span", "", `Menú: ${linea.menu}`));
-      bloque.append(crear("small", "", `${entero.format(linea.personas)} personas${linea.extras.length ? " · " + linea.extras.map(extra => extra.nombre).join(", ") : ""}`));
+      bloque.append(crear("small", "", `${entero.format(linea.personas)} personas${(linea.extras ?? []).length ? " · " + (linea.extras ?? []).map(extra => extra.nombre).join(", ") : ""}`));
       if (linea.notas) bloque.append(crear("small", "", `Preferencias: ${linea.notas}`));
       bloque.append(total);
       lineas.append(bloque);
@@ -575,6 +581,7 @@ function renderDetalle(solicitud) {
   cuerpo.append(total);
 
   $("detalle-estado").value = solicitud.estado;
+  $("detalle-estado").disabled = !puedeEditarPedidos();
   $("detalle-estado").onchange = evento => {
     const select = evento.currentTarget;
     void actualizarEstado(solicitud, select);
@@ -584,6 +591,8 @@ function renderDetalle(solicitud) {
 /* ------------------------------ Navegación --------------------------- */
 
 function cambiarVista(vista, actualizarHash = true) {
+  const destinos = { solicitudes: "pedidos", clientes: "personas", catalogo: "cocina" };
+  if (destinos[vista] && document.querySelector(`.gestion-seccion[data-panel="${destinos[vista]}"]`)) vista = destinos[vista];
   if (!TITULOS[vista]) return;
   estadoApp.vista = vista;
   for (const boton of document.querySelectorAll("[data-vista]")) {
@@ -680,11 +689,10 @@ function prepararSesion() {
   $("cerrar-sesion-admin").addEventListener("click", async () => {
     const sesion = leerSesion();
     try {
-      if (sesion?.token) {
-        await solicitarApi("auth/logout", { metodo: "POST", cuerpo: {}, token: sesion.token });
-      }
-    } catch {
-      /* Se cierra la copia local aunque el servidor no responda. */
+      await solicitarApi("auth/logout", { metodo: "POST", cuerpo: {} });
+    } catch (error) {
+      aviso(error.message || "No pudimos cerrar la sesión. Inténtalo nuevamente.", "error");
+      return;
     }
     borrarSesion();
     window.location.replace("index.html");
@@ -714,7 +722,7 @@ async function cargarTodo() {
     const [resumen, solicitudes, clientes] = await Promise.all([
       solicitarApi("admin/resumen"),
       solicitarApi("admin/solicitudes"),
-      solicitarApi("admin/clientes"),
+      leerSesion()?.usuario?.roles?.includes("ADMINISTRADOR") ? solicitarApi("admin/clientes") : Promise.resolve({ clientes: [] }),
     ]);
     estadoApp.resumen = resumen;
     estadoApp.solicitudes = solicitudes.solicitudes ?? [];
@@ -744,8 +752,38 @@ async function cargarCatalogo() {
   }
 }
 
-function iniciar() {
-  const sesion = leerSesion();
+function agruparSeccion(panel, grupos) {
+  if (!panel) return;
+  const disponibles = grupos.filter(grupo => grupo.nodos.some(Boolean));
+  if (disponibles.length < 2) return;
+  const titulo = panel.querySelector(':scope > h2');
+  const navegacion = crear('nav', 'admin-subnav');
+  navegacion.setAttribute('aria-label', 'Vistas de ' + (titulo?.textContent || 'esta sección'));
+  const vistas = disponibles.map((grupo, indice) => {
+    const vista = crear('div', 'admin-subvista');
+    vista.id = 'subvista-' + panel.dataset.panel + '-' + indice;
+    vista.hidden = indice !== 0;
+    vista.setAttribute('aria-label', grupo.nombre);
+    vista.append(...grupo.nodos.filter(Boolean));
+    const boton = crear('button', '', grupo.nombre);
+    boton.type = 'button';
+    boton.setAttribute('aria-controls', vista.id);
+    boton.setAttribute('aria-pressed', String(indice === 0));
+    boton.addEventListener('click', () => {
+      for (const [i, elemento] of vistas.entries()) {
+        elemento.hidden = i !== indice;
+        navegacion.children[i].setAttribute('aria-pressed', String(i === indice));
+      }
+    });
+    navegacion.append(boton);
+    return vista;
+  });
+  panel.replaceChildren(...(titulo ? [titulo] : []), navegacion, ...vistas);
+}
+
+async function iniciar() {
+  let sesion;
+  try { sesion = await restaurarSesion(); } catch (error) { aviso(error.message, "error"); return; }
   if (!esAdmin(sesion)) {
     window.location.replace("index.html?acceso=1");
     return;
@@ -762,8 +800,57 @@ function iniciar() {
   const vistaInicial = location.hash.slice(1);
   cambiarVista(TITULOS[vistaInicial] ? vistaInicial : "resumen", false);
 
-  void cargarTodo();
-  void cargarCatalogo();
+  const registrar = (id, nombre, panel) => {
+    if (id === "cocina-operacion") {
+      const destino = document.querySelector('.gestion-seccion[data-panel="cocina"]');
+      if (destino) { panel.querySelector("h2")?.remove(); destino.prepend(...panel.children); return; }
+    }
+    TITULOS[id] = nombre;
+    $("panel-contenido").append(panel);
+    const boton = crear("button", "", nombre); boton.type = "button"; boton.dataset.vista = id;
+    boton.addEventListener("click", () => cambiarVista(id));
+    document.querySelector(".admin-menu").append(boton);
+  };
+  const completo = sesion.usuario.roles.includes("ADMINISTRADOR");
+  const verPedidos = sesion.usuario.roles.some(rol => ["ADMINISTRADOR", "OPERACIONES", "FINANZAS"].includes(rol));
+  const verCatalogo = sesion.usuario.roles.some(rol => ["ADMINISTRADOR", "CATALOGO", "OPERACIONES"].includes(rol));
+  if (verPedidos) void cargarTodo();
+  if (verCatalogo) void cargarCatalogo();
+  if (!completo) { for (const boton of document.querySelectorAll("[data-vista]")) boton.hidden = boton.dataset.vista !== 'resumen' || !verPedidos; $("actualizar-panel").hidden = !verPedidos; }
+  try {
+    await inicializarGestion({ registrar, aviso });
+    for (const boton of document.querySelectorAll('[data-vista="clientes"], [data-vista="catalogo"], [data-vista="solicitudes"]')) boton.hidden = true;
+    if (verPedidos && !document.querySelector('.gestion-seccion[data-panel="pedidos"]')) {
+      const panelPedidos = crear('section', 'vista-admin gestion-seccion'); panelPedidos.dataset.panel = 'pedidos'; panelPedidos.hidden = true;
+      registrar('pedidos', 'Pedidos y solicitudes', panelPedidos);
+    }
+    const solicitudesPanel = document.querySelector('[data-panel="solicitudes"]');
+    const pedidosPanel = document.querySelector('.gestion-seccion[data-panel="pedidos"]');
+    if (verPedidos && solicitudesPanel && pedidosPanel) { solicitudesPanel.hidden = false; solicitudesPanel.removeAttribute('data-panel'); pedidosPanel.prepend(solicitudesPanel); }
+    const clientesPanel = document.querySelector('[data-panel="clientes"]');
+    const personasPanel = document.querySelector('.gestion-seccion[data-panel="personas"]');
+    if (completo && clientesPanel && personasPanel) { clientesPanel.hidden = false; clientesPanel.removeAttribute('data-panel'); personasPanel.append(clientesPanel); }
+    const catalogoPanel = document.querySelector('[data-panel="catalogo"]');
+    const cocinaPanel = document.querySelector('.gestion-seccion[data-panel="cocina"]');
+    if (verCatalogo && catalogoPanel && cocinaPanel) { catalogoPanel.hidden = false; catalogoPanel.removeAttribute('data-panel'); cocinaPanel.append(catalogoPanel); }
+    if (sesion.usuario.roles.some(rol => ["ADMINISTRADOR", "CATALOGO", "OPERACIONES"].includes(rol))) await inicializarCocina({ registrar, aviso });
+    agruparSeccion(cocinaPanel, [
+      { nombre: 'Recetas y existencias', nodos: [cocinaPanel?.querySelector(':scope > .cocina-contenido')] },
+      { nombre: 'Catálogo', nodos: verCatalogo ? [catalogoPanel] : [] },
+      { nombre: 'Tablas avanzadas', nodos: [cocinaPanel?.querySelector(':scope > .gestion-tabs'), cocinaPanel?.querySelector(':scope > .gestion-contenido')] },
+    ]);
+    agruparSeccion(personasPanel, [
+      { nombre: 'Cuentas y acceso', nodos: [personasPanel?.querySelector(':scope > .gestion-tabs'), personasPanel?.querySelector(':scope > .gestion-contenido')] },
+      { nombre: 'Clientes', nodos: completo ? [clientesPanel] : [] },
+    ]);
+    agruparSeccion(pedidosPanel, [
+      { nombre: 'Solicitudes', nodos: verPedidos ? [solicitudesPanel] : [] },
+      { nombre: 'Tablas avanzadas', nodos: [pedidosPanel?.querySelector(':scope > .gestion-tabs'), pedidosPanel?.querySelector(':scope > .gestion-contenido')] },
+    ]);
+    const solicitada = location.hash.slice(1);
+    if (TITULOS[solicitada] && (!completo ? document.querySelector('.gestion-seccion[data-panel="'+solicitada+'"]') : true)) cambiarVista(solicitada);
+    else if (!completo) { const primera = document.querySelector(".gestion-seccion"); if (primera) cambiarVista(primera.dataset.panel); }
+  } catch (error) { manejarError(error); }
 }
 
 iniciar();

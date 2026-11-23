@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node scripts/serve-local.mjs",
-    "validate": "node scripts/validate-frontend.mjs"
+    "validate": "node scripts/validate-frontend.mjs",
+    "test": "node scripts/test-sesion.mjs"
   }
 }

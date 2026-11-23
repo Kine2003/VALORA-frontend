@@ -9,6 +9,11 @@ const moneda = new Intl.NumberFormat("es-EC", { style: "currency", currency: "US
 
 function exigir(condicion, mensaje) { if (!condicion) throw new TypeError(mensaje); }
 export function nombreComida(codigo) { return TIPOS_COMIDA[codigo] ?? "Comida"; }
+export function imagenValida(valor) {
+  if(typeof valor!=='string')return false;
+  if(/^assets\/[a-zA-Z0-9_./-]+\.(?:avif|webp|png|jpe?g|svg)$/iu.test(valor)&&!valor.includes('..'))return true;
+  try{const url=new URL(valor);return url.protocol==='https:'&&!url.username&&!url.password&&Boolean(url.hostname);}catch{return false;}
+}
 
 function validarOpciones(opciones, tipo, paqueteId, comida) {
   exigir(Array.isArray(opciones) && opciones.length <= 50, "La lista de opciones no es válida.");
@@ -29,13 +34,13 @@ function validarOpciones(opciones, tipo, paqueteId, comida) {
 /** Vista del catálogo: PAQUETE > PAQUETE_TIPO_COMIDA > OPCION_PAQUETE. */
 export function validarProductos(datos) {
   exigir(datos && datos.version === 2 && datos.moneda === "USD" && typeof datos.demostracion === "boolean", "El formato del catálogo no es válido.");
-  exigir(Array.isArray(datos.productos) && datos.productos.length > 0 && datos.productos.length <= 100, "El catálogo no contiene paquetes válidos.");
+  exigir(Array.isArray(datos.productos) && datos.productos.length <= 100, "El catálogo no contiene paquetes válidos.");
   const identificadores = new Set();
   return datos.productos.map(producto => {
     exigir(producto && identificadorValido(producto.id) && !identificadores.has(producto.id), "Hay un identificador de paquete inválido o repetido.");
     exigir(identificadorValido(producto.servicioId), "El servicio del paquete no es válido.");
     exigir(textoValido(producto.nombre, 160) && textoValido(producto.descripcion, 20000), "El nombre o la descripción del paquete no es válido.");
-    exigir(typeof producto.imagen === "string" && /^assets\/[a-zA-Z0-9_./-]+\.(?:avif|webp|png|jpe?g|svg)$/iu.test(producto.imagen) && !producto.imagen.includes(".."), "La imagen debe ser un recurso local de assets.");
+    exigir(imagenValida(producto.imagen), "La imagen debe ser local de assets o una URL HTTPS sin credenciales.");
     exigir(textoValido(producto.imagenAlt, 240) && textoValido(producto.etiqueta, 80), "La imagen o la etiqueta necesitan un texto descriptivo.");
     exigir(Array.isArray(producto.incluye) && producto.incluye.length > 0 && producto.incluye.length <= 20 && producto.incluye.every(texto => textoValido(texto, 500)), "La lista de servicios incluidos no es válida.");
     exigir(Array.isArray(producto.ofertas) && producto.ofertas.length > 0 && producto.ofertas.length <= 3, "El paquete necesita ofertas por tipo de comida.");

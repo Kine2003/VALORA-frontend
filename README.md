@@ -1,26 +1,27 @@
 # Válora frontend
 
-Frontend de Válora publicado en GitHub Pages.
+Interfaz de clientes y administradores. Conserva el catálogo e incorpora platos, recetas, compras, existencias y una vista renovada de pedidos propios.
 
-El frontend usa la API `https://valora-api-9thl.onrender.com`, configurada en las etiquetas `meta[name="valora-api-url"]` de las páginas HTML. El backend recibe y devuelve JSON y guarda las solicitudes en PostgreSQL de Render.
+La aplicación autenticada se entrega bajo el mismo origen que la API de VALORA-backend. Usa cookies HttpOnly y conserva solo el usuario público en memoria.
 
-Para trabajar en este equipo con PostgreSQL local:
+## Inicio local
 
-1. Ejecuta `npm start` en la carpeta `VALORA-backend`. La configuración local usa PostgreSQL en el puerto 5432 y sirve la API en el puerto 3001.
-2. Ejecuta `npm start` en esta carpeta y abre `http://127.0.0.1:3002/`.
+Inicia npm start en ../VALORA-backend y abre http://127.0.0.1:3001/.
 
-El servidor del frontend local usa la API `http://127.0.0.1:3001` al entregar las páginas HTML. Los archivos publicados en GitHub Pages apuntan a Render. Para usar otra API durante el desarrollo, define `API_BASE_URL` antes de iniciar el frontend.
+Para trabajar con un servidor de desarrollo separado, inicia también npm start en esta carpeta y abre http://127.0.0.1:3002/. El servidor local utiliza un proxy bajo /api/ hacia el backend de 3001 para conservar las cookies del mismo origen. API_BASE_URL solo admite destinos HTTP locales.
 
-## Validación CI/CD
+## Administrar cocina
 
-Cada cambio en `main` o en un pull request ejecuta GitHub Actions para comprobar:
+Después del login, admin.valora.1 entra al dashboard. Cocina y catálogo contiene Recetas y existencias, Catálogo y Tablas avanzadas. Puedes crear platos, definir cantidades por porción, registrar compras y planificar producción. Los ingredientes y proveedores se añaden en Inventario y compras.
 
-- Sintaxis de todos los archivos JavaScript.
-- Versiones y compatibilidad con Node.js 24.
-- Catálogos JSON y configuración de la API `/api/v1/`.
-- Auditoría de dependencias con `npm audit`.
-- Análisis de seguridad JavaScript con CodeQL.
+Las 207 opciones existentes se conservan. Una receta sin cantidades aparece pendiente. Para varios platos que comparten ingredientes utiliza la planificación conjunta.
 
-En cada `push` a `main`, si todas las validaciones pasan, el mismo workflow publica el sitio en GitHub Pages.
+Mis pedidos y cotizaciones incluye resumen, filtros, progreso y detalle de platos. Los pagos de prueba se identifican como simulación; no realizan cobros bancarios.
 
-La página publicada queda en `https://kine2003.github.io/VALORA-frontend/` cuando finaliza correctamente el workflow.
+## Verificación y publicación
+
+Ejecuta npm run validate y npm test. GitHub Actions ejecuta ambas comprobaciones y CodeQL.
+
+Para publicar la aplicación autenticada, Render descarga este frontend al construir el backend y sustituye la configuración API por el mismo origen. Primero hay que publicar ambos repositorios y configurar Render. Editar esta copia local no cambia el sitio remoto anterior.
+
+Consulta DESPLIEGUE.md y el README del backend para el orden de publicación.

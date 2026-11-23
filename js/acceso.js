@@ -1,26 +1,7 @@
+import { pintarPedidos } from "./pedidos.js";
 /* Acceso de clientes y administradores desde la cabecera del sitio. */
 import { solicitarApi } from "./api.js";
-import { borrarSesion, esAdmin, guardarSesion, leerSesion, primerNombre } from "./sesion.js";
-
-const ETIQUETAS_ESTADO = {
-  NUEVA: "Nueva",
-  EN_REVISION: "En revisión",
-  COTIZADA: "Cotizada",
-  CONFIRMADA: "Confirmada",
-  EN_PROCESO: "En proceso",
-  ENTREGADA: "Entregada",
-  RECHAZADA: "Rechazada",
-  CANCELADA: "Cancelada",
-};
-
-const moneda = new Intl.NumberFormat("es-EC", { style: "currency", currency: "USD" });
-
-function fechaCorta(valor) {
-  if (!valor) return "Fecha por confirmar";
-  const fecha = new Date(String(valor).slice(0, 10) + "T12:00:00");
-  if (Number.isNaN(fecha.getTime())) return "Fecha por confirmar";
-  return new Intl.DateTimeFormat("es-EC", { day: "numeric", month: "short", year: "numeric" }).format(fecha);
-}
+import { borrarSesion, esAdmin, guardarSesion, leerSesion, restaurarSesion, primerNombre } from "./sesion.js";
 
 function anunciar(elemento, mensaje) {
   if (!elemento) return;
@@ -56,7 +37,8 @@ export function actualizarBotonCuenta() {
   }
 }
 
-export function inicializarAcceso() {
+export async function inicializarAcceso() {
+  try { await restaurarSesion(); } catch { /* Acceso disponible sin conexión. */ }
   const dialogo = document.getElementById("dialogo-acceso");
   const boton = document.getElementById("abrir-acceso");
   if (!dialogo || !boton) return;
@@ -122,74 +104,7 @@ export function inicializarAcceso() {
     try {
       const { solicitudes } = await solicitarApi("cuenta/solicitudes");
       anunciar(estadoCuenta, "");
-      if (!solicitudes.length) {
-        const vacio = document.createElement("li");
-        vacio.className = "cuenta-vacia";
-        vacio.textContent = "Todavía no tienes pedidos ni cotizaciones. Cuando registres uno, aparecerá aquí.";
-        listaSolicitudes.append(vacio);
-        return;
-      }
-      const fragmento = document.createDocumentFragment();
-      for (const solicitud of solicitudes) {
-        const item = document.createElement("li");
-        item.className = "cuenta-solicitud";
-
-        const principal = document.createElement("div");
-        const codigo = document.createElement("strong");
-        codigo.textContent = `${solicitud.tipo === "PEDIDO" ? "Pedido" : "Cotización"} #${solicitud.id}`;
-        const detalle = document.createElement("span");
-        detalle.textContent = `${fechaCorta(solicitud.fechaEvento)} · ${moneda.format(solicitud.totalCentavos / 100)}`;
-        principal.append(codigo, detalle);
-
-        const pastilla = document.createElement("span");
-        pastilla.className = `pastilla-estado estado-${String(solicitud.estado).toLowerCase()}`;
-        pastilla.textContent = ETIQUETAS_ESTADO[solicitud.estado] ?? solicitud.estado;
-
-        if (solicitud.tipo === "PEDIDO") {
-          const pago = document.createElement("span");
-          pago.className = solicitud.estadoPago === "PAGADO"
-            ? "orden-activa"
-            : "orden-pendiente";
-          pago.textContent = solicitud.estadoPago === "PAGADO" ? "Orden activa" : "Pendiente de pago";
-          principal.append(pago);
-
-          if (solicitud.estadoPago !== "PAGADO") {
-            const acciones = document.createElement("div");
-            acciones.className = "orden-pago-acciones";
-            const metodo = document.createElement("select");
-            metodo.setAttribute("aria-label", `Método de pago de la orden ${solicitud.id}`);
-            for (const [valor, texto] of [["TRANSFERENCIA","Transferencia"],["TARJETA","Tarjeta"],["EFECTIVO","Efectivo"]]) {
-              metodo.append(new Option(texto, valor));
-            }
-            const pagar = document.createElement("button");
-            pagar.type = "button";
-            pagar.className = "boton boton-borde";
-            pagar.textContent = "Pagar ahora";
-            pagar.addEventListener("click", async () => {
-              try {
-                await solicitarApi(`cuenta/ordenes/${solicitud.id}/pago`, {
-                  metodo: "POST",
-                  cuerpo: { metodo: metodo.value },
-                });
-                if (metodo.value === "EFECTIVO") {
-                  const texto = encodeURIComponent(`Hola, quiero pagar en efectivo la orden #${solicitud.id}.`);
-                  window.open(`https://wa.me/593995883856?text=${texto}`, "_blank", "noopener,noreferrer");
-                }
-                await cargarSolicitudes(sesion);
-              } catch (error) {
-                anunciar(estadoCuenta, error.message);
-              }
-            });
-            acciones.append(metodo, pagar);
-            item.append(principal, acciones, pastilla);
-            fragmento.append(item);
-            continue;
-          }
-        }
-        item.append(principal, pastilla);
-        fragmento.append(item);
-      }
-      listaSolicitudes.append(fragmento);
+      pintarPedidos(listaSolicitudes, solicitudes, { estado: estadoCuenta, recargar: () => cargarSolicitudes(sesion) });
     } catch (error) {
       if (error.estado === 401) {
         borrarSesion();
@@ -247,7 +162,6 @@ export function inicializarAcceso() {
       const sesion = await solicitarApi("auth/login", {
         metodo: "POST",
         cuerpo: { correo: datos.correo, password: datos.password },
-        token: null,
       });
       guardarSesion(sesion);
       actualizarBotonCuenta();
@@ -310,11 +224,10 @@ export function inicializarAcceso() {
   document.getElementById("cerrar-sesion-cliente")?.addEventListener("click", async () => {
     const sesion = leerSesion();
     try {
-      if (sesion?.token) {
-        await solicitarApi("auth/logout", { metodo: "POST", cuerpo: {}, token: sesion.token });
-      }
-    } catch {
-      /* La copia local se elimina aunque el servidor no responda. */
+      await solicitarApi("auth/logout", { metodo: "POST", cuerpo: {} });
+    } catch (error) {
+      anunciar(estadoCuenta, error.message || "No pudimos cerrar la sesión. Inténtalo nuevamente.");
+      return;
     }
     borrarSesion();
     actualizarBotonCuenta();

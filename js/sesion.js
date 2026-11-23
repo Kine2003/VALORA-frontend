@@ -1,37 +1,12 @@
-/* Sesión del navegador: solo guarda el token opaco y los datos públicos del usuario. */
-const CLAVE = "valora-sesion-v1";
-
-export function leerSesion() {
-  try {
-    const guardada = JSON.parse(localStorage.getItem(CLAVE) || "null");
-    if (!guardada || typeof guardada.token !== "string" || !guardada.usuario) return null;
-    return guardada;
-  } catch {
-    return null;
-  }
-}
-
-export function guardarSesion(sesion) {
-  try {
-    localStorage.setItem(CLAVE, JSON.stringify(sesion));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function borrarSesion() {
-  try {
-    localStorage.removeItem(CLAVE);
-  } catch {
-    /* El cierre de sesión del servidor sigue siendo válido aunque el navegador no borre la copia. */
-  }
-}
-
-export function esAdmin(sesion = leerSesion()) {
-  return Boolean(sesion?.usuario?.roles?.includes("ADMINISTRADOR"));
-}
-
-export function primerNombre(nombre = "") {
-  return nombre.trim().split(/\s+/u)[0] || "Tu cuenta";
+let sesionActual = null;
+try { localStorage.removeItem("valora-sesion-v1"); } catch { /* almacenamiento bloqueado */ }
+export function leerSesion() { return sesionActual; }
+export function guardarSesion(sesion) { sesionActual = sesion?.usuario ? { usuario: sesion.usuario } : null; return true; }
+export function borrarSesion() { sesionActual = null; }
+export function esAdmin(sesion = leerSesion()) { return Boolean(sesion?.usuario?.roles?.some(rol => ["ADMINISTRADOR", "CATALOGO", "OPERACIONES", "FINANZAS"].includes(rol))); }
+export function primerNombre(nombre = "") { return nombre.trim().split(/\s+/u)[0] || "Tu cuenta"; }
+export async function restaurarSesion() {
+  const { solicitarApi } = await import("./api.js");
+  try { let sesion = await solicitarApi("auth/sesion"); if (!sesion) sesion = await solicitarApi("auth/renovar", { metodo: "POST", cuerpo: {}, reintentar: false }); guardarSesion(sesion?.usuario ? sesion : sesion ? { usuario: sesion } : null); return leerSesion(); }
+  catch (error) { borrarSesion(); if (error.estado !== 401) throw error; return null; }
 }

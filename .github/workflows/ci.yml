@@ -33,6 +33,9 @@ jobs:
       - name: Validar código, catálogos y configuración API
         run: npm run validate
 
+      - name: Probar sesión, formularios y pedidos
+        run: npm test
+
       - name: Auditar dependencias
         run: npm audit --audit-level=high
 
@@ -69,9 +72,17 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Preparar artefacto de Pages
+        run: |
+          mkdir -p .pages
+          cat > .pages/index.html <<'HTML'
+          <!doctype html>
+          <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="refresh" content="0;url=https://valora-api-9thl.onrender.com/"><link rel="canonical" href="https://valora-api-9thl.onrender.com/"><title>Válora</title></head><body><p>Abriendo Válora… <a href="https://valora-api-9thl.onrender.com/">Entrar a la aplicación</a></p></body></html>
+          HTML
+
+      - name: Subir entrada de Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: .pages
 
       - name: Publicar sitio
         id: deployment

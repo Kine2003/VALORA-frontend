@@ -44,8 +44,8 @@ if (datos["servicios.json"].version !== 3 || !datos["servicios.json"].servicios 
 for (const nombre of ["index.html", "condiciones.html", "privacidad.html", "admin.html"]) {
   const html = await readFile(new URL(nombre, root), "utf8");
   if (!/<html\b[^>]*lang="es"/u.test(html)) throw new Error(`${nombre} no declara lang="es".`);
-  if (!/<meta\s+name="valora-api-url"\s+content="https:\/\//u.test(html)) {
-    throw new Error(`${nombre} no tiene una URL HTTPS para la API.`);
+  if (!/<meta\s+name="valora-api-url"\s+content="(?:https:\/\/[^" ]*|\/|)"/u.test(html)) {
+    throw new Error(`${nombre} debe declarar la API del mismo origen o una URL HTTPS.`);
   }
 }
 
