@@ -1,6 +1,9 @@
 import { fechaPedido, pintarPedidos } from '../js/pedidos.js';
-import { campo, campoTabla } from '../js/gestion.js';
+import { campo, campoTabla, camposRoles } from '../js/gestion.js';
 import { estadoReceta } from '../js/cocina.js';
+import { inicializarCocina } from '../js/cocina.js';
+import { ROLES_EQUIPO, esAdmin, esEquipo } from '../js/sesion.js';
+import { fechaTrabajo, pintarTrabajo } from '../js/equipo.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { solicitarApi, urlApi } from '../js/api.js';
@@ -8,6 +11,51 @@ import { leerSesion, guardarSesion, borrarSesion, restaurarSesion } from '../js/
 globalThis.location = { origin: 'https://valora.test', href: 'https://valora.test/admin.html' };
 globalThis.document = { querySelector: () => ({ content: '/' }) };
 const respuesta = (status, cuerpo) => ({ status, ok: status < 400, json: async () => cuerpo });
+test('crear cuenta usa el cargo autorizado y conserva el código al seleccionar', () => {
+ const anterior=globalThis.document;
+ class Elemento {constructor(){this.children=[];}append(...n){this.children.push(...n);}prepend(n){this.children.unshift(n);}}
+ globalThis.document={createElement:()=>new Elemento()};
+ try {
+  const {roles,checks}=camposRoles([{codigo:'USUARIO',nombre:'Cliente'},{codigo:'CHEF_SUPERVISOR',nombre:'Chef supervisor'}]);
+  assert.equal(roles.children[2].textContent,'Chef supervisor');assert.equal(checks[0].checked,true);assert.equal(checks[1].checked,false);
+  checks[0].checked=false;checks[1].checked=true;assert.deepEqual(checks.filter(c=>c.checked).map(c=>c.value),['CHEF_SUPERVISOR']);
+  assert.equal(camposRoles().checks.length,5);assert.equal(camposRoles([]).checks.length,0);
+ } finally {globalThis.document=anterior;}
+});
+test('los quince cargos entran al panel y administrador conserva su vista completa', () => {
+ assert.equal(ROLES_EQUIPO.length,15);
+ for(const rol of ROLES_EQUIPO) { const s={usuario:{roles:[rol]}}; assert.equal(esAdmin(s),true); assert.equal(esEquipo(s),true); }
+ for(const roles of [[],['DESCONOCIDO'],['USUARIO']]) assert.equal(esAdmin({usuario:{roles}}),false);
+ assert.equal(esEquipo({usuario:{roles:['CONDUCTOR','ADMINISTRADOR']}}),false);
+ assert.equal(esAdmin(null),false);
+});
+
+test('jornada sin datos, fechas inválidas y entregas no pendientes mantienen controles seguros', async () => {
+ const anterior=globalThis.document;
+ class Elemento {
+  constructor(tag){this.tagName=tag;this.children=[];this.dataset={};this.attributes={};this.listeners={};}
+  append(...hijos){this.children.push(...hijos);}
+  replaceChildren(...hijos){this.children=hijos;}
+  setAttribute(k,v){this.attributes[k]=v;}
+  addEventListener(k,v){this.listeners[k]=v;}
+  click(){this.listeners.click?.();}
+  get firstChild(){return this.children[0];}
+ }
+ const textos = el => [el.textContent||'',...(el.children||[]).map(textos)].join(' ');
+ globalThis.document={createElement:tag=>new Elemento(tag),createTextNode:t=>({textContent:t})};
+ try {
+  const vacio=new Elemento('div');pintarTrabajo(vacio,[]);assert.match(textos(vacio),/No hay servicios/);
+  assert.equal(fechaTrabajo('malformada'),'Fecha por confirmar');
+  const lista=new Elemento('div');pintarTrabajo(lista,[{id:1,estado:'ENTREGADA',direccion:'<script>test</script>'}],{entregas:true});
+  assert.doesNotMatch(textos(lista),/Confirmar entrega/); assert.match(textos(lista),/<script>test<\/script>/);
+  const pendiente=new Elemento('div');pintarTrabajo(pendiente,[{id:2,estado:'EN_PROCESO'}],{entregas:true});assert.match(textos(pendiente),/Confirmar entrega/);
+  let panel;
+  await inicializarCocina({registrar:(_id,_nombre,p)=>{panel=p;},aviso:()=>{},ruta:'equipo',permisos:[],datosIniciales:{ingredientes:[],recetas:[]}});
+  assert.match(textos(panel),/Recetas/);assert.doesNotMatch(textos(panel),/Compras|Guardar receta|Guardar producción|Añadir un plato/);
+  await inicializarCocina({registrar:(_id,_nombre,p)=>{panel=p;},aviso:()=>{},ruta:'equipo',permisos:['ingredientes','compras'],datosIniciales:{ingredientes:[],recetas:[]}});
+  assert.match(textos(panel),/Compras/);assert.doesNotMatch(textos(panel),/Capacidad y producción|Añadir un plato/);
+ } finally { globalThis.document=anterior; }
+});
 test('las bajas sin campos envían JSON para el control CSRF',async()=>{
  const anterior=globalThis.fetch;
  globalThis.fetch=async(_url,opciones)=>{assert.equal(opciones.method,'DELETE');assert.equal(opciones.headers['Content-Type'],'application/json');assert.equal(opciones.body,'{}');return respuesta(200,{retirado:true});};

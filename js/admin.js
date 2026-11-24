@@ -2,7 +2,7 @@ import { inicializarGestion } from "./gestion.js";
 import { inicializarCocina } from "./cocina.js";
 /* Controlador del panel administrativo de Válora. */
 import { solicitarApi } from "./api.js";
-import { borrarSesion, esAdmin, leerSesion, restaurarSesion } from "./sesion.js";
+import { borrarSesion, esAdmin, esEquipo, leerSesion, restaurarSesion } from "./sesion.js";
 
 const ESTADOS = ["NUEVA", "EN_REVISION", "COTIZADA", "CONFIRMADA", "EN_PROCESO", "ENTREGADA", "RECHAZADA", "CANCELADA"];
 const ETIQUETAS_ESTADO = {
@@ -789,6 +789,12 @@ async function iniciar() {
     return;
   }
   pintarUsuario(sesion);
+  if (esEquipo(sesion)) {
+    prepararSesion();
+    const { inicializarEquipo } = await import('./equipo.js');
+    await inicializarEquipo({ aviso });
+    return;
+  }
   poblarEstados();
   prepararNavegacion();
   prepararFiltros();

@@ -18,8 +18,13 @@ export function campoTabla(c, original = '') {
   if (c.longitud) f.input.maxLength = c.longitud;
   return f;
 }
+export function camposRoles(rolesDisponibles = ['USUARIO','CATALOGO','OPERACIONES','FINANZAS','ADMINISTRADOR'].map(codigo => ({codigo,nombre:codigo}))) {
+ const roles=nodo('fieldset');roles.append(nodo('legend','','Permisos'));const checks=[];
+ for(const rol of rolesDisponibles){const label=nodo('label','gestion-rol',rol.nombre),input=document.createElement('input');input.type='checkbox';input.value=rol.codigo;input.checked=rol.codigo==='USUARIO';label.prepend(input);roles.append(label);checks.push(input);}
+ return {roles,checks};
+}
 export async function inicializarGestion({ registrar, aviso }) {
- const { secciones } = await solicitarApi('admin/gestion');
+ const { secciones, rolesDisponibles } = await solicitarApi('admin/gestion');
  for (const seccion of secciones) {
   const panel = nodo('section', 'vista-admin gestion-seccion'); panel.dataset.panel = seccion.id; panel.hidden = true;
   const titulo = nodo('h2', '', seccion.nombre), ayuda = nodo('p', 'admin-descripcion', 'Consulta y administra los registros de esta sección.');
@@ -42,6 +47,17 @@ export async function inicializarGestion({ registrar, aviso }) {
     const body = document.createElement('tbody');
     for(const registro of datos.filas) { const tr = document.createElement('tr');for(const c of tabla.campos) tr.append(nodo('td','',registro[c.nombre] === null ? 'Sin valor' : String(registro[c.nombre] ?? '')));
       const acciones=nodo('td','gestion-acciones');
+      if(tabla.cambiarEstado && !['ENTREGADA','RECHAZADA','CANCELADA'].includes(registro.estado)) {
+        const estados=['NUEVA','EN_REVISION','COTIZADA','CONFIRMADA','EN_PROCESO','ENTREGADA','RECHAZADA','CANCELADA'];
+        const selector=campo('Estado de solicitud','text',registro.estado,estados.map(id=>({id,nombre:id.replaceAll('_',' ')})));
+        const guardar=boton('Actualizar estado',async()=>{
+          if(!confirm('¿Actualizar el estado de esta solicitud?'))return;
+          guardar.disabled=true;
+          try{await solicitarApi('admin/solicitudes/'+encodeURIComponent(registro[tabla.claves[0]]),{metodo:'PATCH',cuerpo:{estado:selector.input.value}});await cargar();aviso('Estado actualizado.');}
+          catch(e){aviso(e.message,'error');}finally{guardar.disabled=false;}
+        });
+        acciones.append(selector.label,guardar);
+      }
       const operar = async (ruta, mensaje) => { if(!confirm(mensaje))return;try{await solicitarApi(ruta,{metodo:'POST',cuerpo:{}});await cargar();aviso('Operación guardada.');}catch(e){aviso(e.message,'error');} };
       if(tabla.nombre==='sesion_usuario') acciones.append(boton('Revocar sesión',()=>operar('admin/sesiones/'+encodeURIComponent(registro[tabla.claves[0]])+'/revocar','¿Revocar esta sesión?')));
       if(tabla.nombre==='factura') for(const accion of ['emitir','anular'])acciones.append(boton(accion==='emitir'?'Emitir factura':'Anular factura',()=>operar('admin/facturas/'+encodeURIComponent(registro[tabla.claves[0]])+'/'+accion,'¿'+(accion==='emitir'?'Emitir':'Anular')+' esta factura?')));
@@ -51,7 +67,7 @@ export async function inicializarGestion({ registrar, aviso }) {
    }catch(e){if(actual!==turno)return;contenido.replaceChildren(nodo('p','admin-ayuda',e.message),boton('Reintentar',()=>void cargar()));}
   }
   function crearCuenta(){
-   const dialogo=nodo('dialog','dialogo-gestion'),form=nodo('form','gestion-form');form.append(nodo('h2','','Crear cuenta'));const entradas={};for(const [nombre,tipo]of [['nombre','text'],['correo','text'],['password','password']]){const f=campo(nombre,tipo);f.input.required=true;if(nombre==='password'){f.input.minLength=15;f.input.maxLength=128;f.input.autocomplete='new-password';}else f.input.maxLength=200;entradas[nombre]=f.input;form.append(f.label);}const roles=nodo('fieldset');roles.append(nodo('legend','','Permisos'));const checks=[];for(const rol of ['USUARIO','CATALOGO','OPERACIONES','FINANZAS','ADMINISTRADOR']){const label=nodo('label','gestion-rol',rol),input=document.createElement('input');input.type='checkbox';input.value=rol;input.checked=rol==='USUARIO';label.prepend(input);roles.append(label);checks.push(input);}const error=nodo('p','gestion-error');error.setAttribute('role','alert');const enviar=nodo('button','boton','Crear cuenta');enviar.type='submit';form.append(roles,error,enviar,boton('Cancelar',()=>dialogo.close()));dialogo.append(form);document.body.append(dialogo);dialogo.addEventListener('close',()=>dialogo.remove());form.addEventListener('submit',async e=>{e.preventDefault();enviar.disabled=true;try{await solicitarApi('admin/usuarios',{metodo:'POST',cuerpo:{...Object.fromEntries(Object.entries(entradas).map(([k,v])=>[k,v.value])),roles:checks.filter(c=>c.checked).map(c=>c.value)}});dialogo.close();await cargar();aviso('Cuenta creada.');}catch(e){error.textContent=e.message;}finally{enviar.disabled=false;}});dialogo.showModal();entradas.nombre.focus();
+   const dialogo=nodo('dialog','dialogo-gestion'),form=nodo('form','gestion-form');form.append(nodo('h2','','Crear cuenta'));const entradas={};for(const [nombre,tipo]of [['nombre','text'],['correo','text'],['password','password']]){const f=campo(nombre,tipo);f.input.required=true;if(nombre==='password'){f.input.minLength=15;f.input.maxLength=128;f.input.autocomplete='new-password';}else f.input.maxLength=200;entradas[nombre]=f.input;form.append(f.label);}const {roles,checks}=camposRoles(rolesDisponibles);const error=nodo('p','gestion-error');error.setAttribute('role','alert');const enviar=nodo('button','boton','Crear cuenta');enviar.type='submit';form.append(roles,error,enviar,boton('Cancelar',()=>dialogo.close()));dialogo.append(form);document.body.append(dialogo);dialogo.addEventListener('close',()=>dialogo.remove());form.addEventListener('submit',async e=>{e.preventDefault();enviar.disabled=true;try{await solicitarApi('admin/usuarios',{metodo:'POST',cuerpo:{...Object.fromEntries(Object.entries(entradas).map(([k,v])=>[k,v.value])),roles:checks.filter(c=>c.checked).map(c=>c.value)}});dialogo.close();await cargar();aviso('Cuenta creada.');}catch(e){error.textContent=e.message;}finally{enviar.disabled=false;}});dialogo.showModal();entradas.nombre.focus();
   }
   function clave(tabla,fila){return Object.fromEntries(tabla.claves.map(c=>[c,fila[c]]));}
   function editar(tabla,registro){const dialogo=nodo('dialog','dialogo-gestion');const form=nodo('form','gestion-form');form.append(nodo('h2','',`${registro?'Editar':'Crear'} ${tabla.etiqueta}`));const grid=nodo('div','gestion-grid'),entradas=[];

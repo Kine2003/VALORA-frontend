@@ -1,4 +1,17 @@
 /* Válora · Panel administrativo. */
+.panel-equipo .equipo-cabecera { padding: clamp(1.4rem,4vw,3rem); background: #242521; color: #f7f1e4; border-top: 3px solid #bf9e5d; margin-bottom: 2rem; }
+.panel-equipo .equipo-cabecera h2 { color: #f7f1e4; margin: .6rem 0 1rem; }
+.panel-equipo .equipo-cabecera p { max-width: 65ch; line-height: 1.6; }
+.panel-equipo .equipo-cabecera .admin-etiqueta { color: #dfbf81; }
+.equipo-servicios, .equipo-metricas { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,250px),1fr)); gap: 1rem; margin: 1rem 0 2rem; }
+.equipo-servicio, .equipo-metrica { padding: 1.5rem; background: #fffdf7; border: 1px solid #ddd5c6; border-radius: .4rem; }
+.equipo-servicio p { overflow-wrap: anywhere; margin: .7rem 0; }
+.equipo-servicio .boton { margin-top: 1rem; min-height: 44px; }
+.equipo-metrica strong { display: block; font-size: 2.5rem; font-weight: 500; }
+.equipo-metrica span { font-size: .8rem; letter-spacing: .04em; }
+.equipo-vacio { padding: 2rem; background: #f3efe7; border-left: 3px solid #b89960; line-height: 1.6; }
+.panel-equipo .gestion-tabs { flex-wrap: wrap; }
+.panel-equipo button:focus-visible { outline: 3px solid #a97c27; outline-offset: 3px; }
 @font-face {
   font-family: "Instrument Serif";
   src: url("fonts/instrument-serif-latin-normal.woff2") format("woff2");
